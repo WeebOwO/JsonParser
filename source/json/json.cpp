@@ -2,8 +2,6 @@
 
 #include <cassert>
 
-static void MoveNext(std::string_view view) { view.remove_prefix(1); }
-
 static void Expect(JsonContext& context, char ch) {
     assert(context.json.front() == ch);
     context.json.remove_prefix(1);
