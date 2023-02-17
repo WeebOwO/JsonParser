@@ -15,10 +15,10 @@ enum class JsonType : uint32_t {
 };
 
 enum class ParseState : uint32_t {
-   ParseOk = 0,
-   ParseEexpectValue,
-   ParseInvalidValue,
-   ParseRootNotSingular
+    ParseOk = 0,
+    ParseEexpectValue,
+    ParseInvalidValue,
+    ParseRootNotSingular
 };
 
 struct JsonNode {
@@ -31,6 +31,5 @@ struct JsonContext {
 
 namespace json {
 ParseState ParseJson(JsonNode* node, std::string_view json);
-JsonType GetType(JsonNode* node);
-}
-
+JsonType   GetType(JsonNode* node);
+} // namespace json
