@@ -1,5 +1,4 @@
 add_rules("mode.debug", "mode.release")
-add_includedirs("source/")
 set_languages("cxx20")
 
 target("JsonParser")
