@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <variant>
+#include <vector>
 
 enum class JsonType : uint32_t {
     Null = 0,
@@ -26,7 +27,8 @@ enum class ParseState : uint32_t {
 
 struct JsonNode {
     std::variant<double, std::string> val;
-    JsonType valueType;
+    std::vector<JsonNode*>            childs;
+    JsonType                          valueType;
 };
 
 struct JsonContext {
@@ -36,5 +38,5 @@ struct JsonContext {
 namespace json {
 ParseState ParseJson(JsonNode* node, std::string_view json);
 JsonType   GetType(JsonNode* node);
-double GetValue(JsonNode* node);
+double     GetValue(JsonNode* node);
 } // namespace json

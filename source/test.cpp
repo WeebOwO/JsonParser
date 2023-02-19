@@ -111,6 +111,13 @@ public:
         TEST_ERROR(ParseState::ParseRootNotSingular, "null x");
     }
 
+    static void ParseArrayTest() {
+        JsonNode node;
+        node.valueType = JsonType::Null;
+        EXPECT_EQ_INT(ParseState::ParseOk, json::ParseJson(&node, "[\"abc\", [1, 2], 3]"));
+        EXPECT_EQ_INT(JsonType::Array, json::GetType(&node));
+    }
+    
     static void ParseTest() {
         ParseNullTest();
         ParseTrueTest();
@@ -121,6 +128,7 @@ public:
         ParseNotSingularTest();
         ParseStringTest();
         ParseMissQuotationTest();
+        ParseArrayTest();
     }
 };
 

@@ -1,5 +1,6 @@
 #include "json.h"
 
+#include <algorithm>
 #include <cassert>
 #include <exception>
 #include <string>
@@ -11,7 +12,7 @@ static void Expect(JsonContext& context, char ch) {
 }
 
 static void ParseWhiteSpace(JsonContext& context) {
-    if(context.json.empty()) return;
+    if (context.json.empty()) return;
     uint32_t cnt = 0;
     for (const auto& ch : context.json) {
         if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
@@ -56,13 +57,11 @@ static ParseState ParseFalse(JsonContext& context, JsonNode* node) {
 
 static ParseState ParseNumber(JsonContext& context, JsonNode* node) {
     std::string temp(context.json.cbegin(), context.json.cend());
-    size_t idx = -1;
-    double val;
+    size_t      idx = -1;
+    double      val;
     try {
         val = std::stod(temp, &idx);
-    } catch(std::exception& e) {
-        return ParseState::ParseInvalidValue;
-    }
+    } catch (std::exception& e) { return ParseState::ParseInvalidValue; }
     node->val = val;
     context.json.remove_prefix(idx);
     node->valueType = JsonType::Number;
@@ -72,25 +71,61 @@ static ParseState ParseNumber(JsonContext& context, JsonNode* node) {
 static ParseState ParseString(JsonContext& context, JsonNode* node) {
     Expect(context, '"');
     std::string parsedString;
-    int cnt = 0;
-    for(const auto& ch : context.json) {
-        switch(ch) {
-            case '\"':  {
-                node->val = parsedString;
-                context.json.remove_prefix(cnt + 1);
-                node->valueType = JsonType::String;
-                return ParseState::ParseOk;
-            }
-            default: parsedString.push_back(ch);
+    int         cnt = 0;
+    for (const auto& ch : context.json) {
+        switch (ch) {
+        case '\"': {
+            node->val = parsedString;
+            context.json.remove_prefix(cnt + 1);
+            node->valueType = JsonType::String;
+            return ParseState::ParseOk;
+        }
+        default:
+            parsedString.push_back(ch);
         }
         ++cnt;
     }
     return ParseState::ParseMissQuotationMark;
 }
 
+static ParseState ParseValue(JsonContext& context, JsonNode* node);
+
+static ParseState ParseArray(JsonContext& context, JsonNode* node) {
+    Expect(context, '[');
+
+    if (context.json.front() == ']') {
+        node->valueType = JsonType::Array;
+        return ParseState::ParseOk;
+    }
+
+    std::vector<JsonNode*> childs;
+
+    while (true) {
+        ParseState ret = ParseValue(context, node);
+        if (ret != ParseState::ParseOk) { return ret; }
+        auto child = new JsonNode();
+        // copy node
+        child->val = node->val;
+        child->childs.swap(node->childs);
+        child->valueType = node->valueType;
+
+        childs.push_back(child);
+        ParseWhiteSpace(context);
+        if (context.json.front() == ',') {
+            context.json.remove_prefix(1);
+        } else if (context.json.front() == ']') {
+            context.json.remove_prefix(1);
+            node->childs.swap(childs);
+            node->valueType = JsonType::Array;
+            return ParseState::ParseOk;
+        }
+    }
+}
+
 static ParseState ParseValue(JsonContext& context, JsonNode* node) {
     if (context.json.empty()) return ParseState::ParseEexpectValue;
 
+    ParseWhiteSpace(context);
     switch (context.json.front()) {
     case 'n':
         return ParseNull(context, node);
@@ -98,8 +133,10 @@ static ParseState ParseValue(JsonContext& context, JsonNode* node) {
         return ParseTrue(context, node);
     case 'f':
         return ParseFalse(context, node);
-    case '"': 
+    case '"':
         return ParseString(context, node);
+    case '[':
+        return ParseArray(context, node);
     default:
         return ParseNumber(context, node);
     }
@@ -115,14 +152,14 @@ ParseState ParseJson(JsonNode* node, std::string_view json) {
     node->valueType = JsonType::Null;
     ParseWhiteSpace(context);
     ParseState ret = ParseValue(context, node);
-    if(ret == ParseState::ParseOk) {
+    if (ret == ParseState::ParseOk) {
         ParseWhiteSpace(context);
-        if(!context.json.empty()) return ParseState::ParseRootNotSingular;
+        if (!context.json.empty()) return ParseState::ParseRootNotSingular;
     }
     return ret;
 }
 
-JsonType GetType(JsonNode* node) { 
+JsonType GetType(JsonNode* node) {
     assert(node != nullptr);
     return node->valueType;
 }
@@ -131,4 +168,5 @@ double GetValue(JsonNode* node) {
     assert(node != nullptr && node->valueType == JsonType::Number);
     return std::get<double>(node->val);
 }
+
 } // namespace json
