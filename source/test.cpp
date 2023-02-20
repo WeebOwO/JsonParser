@@ -155,6 +155,5 @@ int main() {
     Test::ParseTest();
     std::cout << std::format("{}/{} ({:.2f}%) passed\n", testPass, testCount,
                              testPass * 100.0 / testCount);
-
     return 0;
 }
