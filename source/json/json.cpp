@@ -1,11 +1,7 @@
 #include "json.h"
 
-#include <algorithm>
 #include <cassert>
 #include <exception>
-#include <memory>
-#include <string>
-#include <unordered_map>
 
 static void Expect(JsonContext& context, char ch) {
     assert(context.json.front() == ch);
@@ -129,7 +125,7 @@ static ParseState ParseArray(JsonContext& context, JsonNode* node) {
 
 static ParseState ParseObject(JsonContext& context, JsonNode* node) {
     Expect(context, '{');
-    
+
     if (context.json.front() == '}') {
         node->valueType = JsonType::Object;
         context.json.remove_prefix(1);
@@ -146,7 +142,7 @@ static ParseState ParseObject(JsonContext& context, JsonNode* node) {
             context.json.remove_prefix(1);
             return ParseState::ParseOk;
         }
-        
+
         ParseState ret = ParseValue(context, node);
         if (ret != ParseState::ParseOk || node->valueType != JsonType::String) break;
 
@@ -155,17 +151,17 @@ static ParseState ParseObject(JsonContext& context, JsonNode* node) {
         if (context.json.front() == ':') { context.json.remove_prefix(1); }
         ParseWhiteSpace(context);
 
-        ret            = ParseValue(context, node);
+        ret = ParseValue(context, node);
 
-        auto val      = std::make_unique<JsonNode>();
+        auto val = std::make_unique<JsonNode>();
 
         val->valueType = node->valueType;
         val->objectDict.swap(node->objectDict);
         val->childs.swap(node->childs);
-        val->val              = node->val;
+        val->val  = node->val;
         dict[key] = std::move(val);
 
-        if(context.json.front() == ',') context.json.remove_prefix(1);
+        if (context.json.front() == ',') context.json.remove_prefix(1);
     }
 
     return ParseState::ParseInvalidValue;

@@ -1,10 +1,8 @@
-#include <cstdio>
-#include <cstdlib>
 #include <format>
-#include <iostream>
-#include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <sstream>
+
 
 #include "json/json.h"
 
@@ -110,9 +108,7 @@ public:
         TEST_ERROR(ParseState::ParseMissQuotationMark, "\"abc");
     }
 
-    static void ParseNotSingularTest() {
-        TEST_ERROR(ParseState::ParseRootNotSingular, "null x");
-    }
+    static void ParseNotSingularTest() { TEST_ERROR(ParseState::ParseRootNotSingular, "null x"); }
 
     static void ParseArrayTest() {
         JsonNode node;
@@ -129,9 +125,9 @@ public:
     }
 
     static void ParseJsonTest() {
-        std::string filepath = R"(D:\Dev\JsonParser\target.json)";
-        std::string file;
-        std::ifstream in(filepath);
+        std::string       filepath = R"(D:\Dev\JsonParser\target.json)";
+        std::string       file;
+        std::ifstream     in(filepath);
         std::stringstream ss;
         ss << in.rdbuf();
         file = ss.str();
@@ -160,6 +156,6 @@ int main() {
     Test::ParseTest();
     std::cout << std::format("{}/{} ({:.2f}%) passed\n", testPass, testCount,
                              testPass * 100.0 / testCount);
-    
+
     return 0;
 }
