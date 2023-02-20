@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -14,7 +15,7 @@ enum class JsonType : uint32_t {
     Number,
     String,
     Array,
-    Obejct,
+    Object,
 };
 
 enum class ParseState : uint32_t {
@@ -26,9 +27,11 @@ enum class ParseState : uint32_t {
 };
 
 struct JsonNode {
-    std::variant<double, std::string> val;
-    std::vector<JsonNode*>            childs;
-    JsonType                          valueType;
+    JsonType                               valueType;
+    std::variant<double, std::string>      val;
+    std::vector<std::unique_ptr<JsonNode>> childs;
+    // we can use std::vector, but use hashmap for quick lookup
+    std::unordered_map<std::string, std::unique_ptr<JsonNode>> objectDict;
 };
 
 struct JsonContext {

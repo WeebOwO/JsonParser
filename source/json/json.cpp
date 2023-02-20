@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <exception>
+#include <memory>
 #include <string>
 
 static void Expect(JsonContext& context, char ch) {
@@ -94,22 +95,25 @@ static ParseState ParseArray(JsonContext& context, JsonNode* node) {
     Expect(context, '[');
 
     if (context.json.front() == ']') {
+        context.json.remove_prefix(1);
         node->valueType = JsonType::Array;
         return ParseState::ParseOk;
     }
 
-    std::vector<JsonNode*> childs;
+    std::vector<std::unique_ptr<JsonNode>> childs;
 
     while (true) {
         ParseState ret = ParseValue(context, node);
         if (ret != ParseState::ParseOk) { return ret; }
-        auto child = new JsonNode();
-        // copy node
+        auto child = std::make_unique<JsonNode>();
+
+        // copy and swap
         child->val = node->val;
         child->childs.swap(node->childs);
+        child->objectDict.swap(node->objectDict);
         child->valueType = node->valueType;
 
-        childs.push_back(child);
+        childs.emplace_back(std::move(child));
         ParseWhiteSpace(context);
         if (context.json.front() == ',') {
             context.json.remove_prefix(1);
@@ -120,6 +124,43 @@ static ParseState ParseArray(JsonContext& context, JsonNode* node) {
             return ParseState::ParseOk;
         }
     }
+}
+
+static ParseState ParseObject(JsonContext& context, JsonNode* node) {
+    Expect(context, '{');
+    
+    if (context.json.front() == '}') {
+        node->valueType = JsonType::Object;
+        context.json.remove_prefix(1);
+        return ParseState::ParseOk;
+    }
+
+    while (true) {
+        ParseWhiteSpace(context);
+        if (context.json.front() == '}') {
+            node->valueType = JsonType::Object;
+            context.json.remove_prefix(1);
+            return ParseState::ParseOk;
+        }
+
+        ParseState ret = ParseValue(context, node);
+        if (ret != ParseState::ParseOk || node->valueType != JsonType::String) break;
+
+        std::string key = std::get<std::string>(node->val);
+        ParseWhiteSpace(context);
+        if (context.json.front() == ':') { context.json.remove_prefix(1); }
+        ParseWhiteSpace(context);
+
+        ret            = ParseValue(context, node);
+        auto val       = std::make_unique<JsonNode>();
+        val->valueType = node->valueType;
+        val->objectDict.swap(node->objectDict);
+        val->childs.swap(node->childs);
+        val->val              = node->val;
+        node->objectDict[key] = std::move(val);
+    }
+
+    return ParseState::ParseInvalidValue;
 }
 
 static ParseState ParseValue(JsonContext& context, JsonNode* node) {
@@ -137,6 +178,8 @@ static ParseState ParseValue(JsonContext& context, JsonNode* node) {
         return ParseString(context, node);
     case '[':
         return ParseArray(context, node);
+    case '{':
+        return ParseObject(context, node);
     default:
         return ParseNumber(context, node);
     }

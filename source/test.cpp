@@ -117,7 +117,14 @@ public:
         EXPECT_EQ_INT(ParseState::ParseOk, json::ParseJson(&node, "[\"abc\", [1, 2], 3]"));
         EXPECT_EQ_INT(JsonType::Array, json::GetType(&node));
     }
-    
+
+    static void ParseObjectTest() {
+        JsonNode node;
+        node.valueType = JsonType::Null;
+        EXPECT_EQ_INT(ParseState::ParseOk, json::ParseJson(&node, "{ \"key\" : [1, 2] }"));
+        EXPECT_EQ_INT(JsonType::Object, json::GetType(&node));
+    }
+
     static void ParseTest() {
         ParseNullTest();
         ParseTrueTest();
@@ -129,6 +136,7 @@ public:
         ParseStringTest();
         ParseMissQuotationTest();
         ParseArrayTest();
+        ParseObjectTest();
     }
 };
 
