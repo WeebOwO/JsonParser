@@ -2,6 +2,9 @@
 #include <cstdlib>
 #include <format>
 #include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 
 #include "json/json.h"
 
@@ -125,6 +128,18 @@ public:
         EXPECT_EQ_INT(JsonType::Object, json::GetType(&node));
     }
 
+    static void ParseJsonTest() {
+        std::string filepath = R"(D:\Dev\JsonParser\target.json)";
+        std::string file;
+        std::ifstream in(filepath);
+        std::stringstream ss;
+        ss << in.rdbuf();
+        file = ss.str();
+        JsonNode root;
+        EXPECT_EQ_INT(ParseState::ParseOk, json::ParseJson(&root, file));
+        EXPECT_EQ_INT(JsonType::Object, json::GetType(&root));
+    }
+
     static void ParseTest() {
         ParseNullTest();
         ParseTrueTest();
@@ -137,6 +152,7 @@ public:
         ParseMissQuotationTest();
         ParseArrayTest();
         ParseObjectTest();
+        ParseJsonTest();
     }
 };
 
